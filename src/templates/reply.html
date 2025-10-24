@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reply Email</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h2>Reply to Email</h2>
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <article>
+            {% for message in messages %}
+              <p>{{ message }}</p>
+            {% endfor %}
+          </article>
+        {% endif %}
+      {% endwith %}
+
+      <form action="{{ url_for('reply_email') }}" method="post">
+        <label>
+          Message ID
+          <input name="message_id" type="text" placeholder="Enter message ID" required />
+        </label>
+        <label>
+          Reply text
+          <textarea name="reply_text" rows="6" placeholder="Write your reply..." required></textarea>
+        </label>
+        <button type="submit">Send Reply</button>
+        <a href="{{ url_for('index') }}" role="button" class="secondary">Back</a>
+      </form>
+    </main>
+  </body>
+  </html>
+
+

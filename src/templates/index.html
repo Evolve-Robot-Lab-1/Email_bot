@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gmail Integration</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h2>Gmail Integration</h2>
+      <nav>
+        <ul>
+          <li><a href="{{ url_for('send_email') }}">Send Email</a></li>
+          <li><a href="{{ url_for('read_emails') }}">Read Emails</a></li>
+          <li><a href="{{ url_for('reply_email') }}">Reply Email</a></li>
+        </ul>
+      </nav>
+    </main>
+  </body>
+  </html>
+
+

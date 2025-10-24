@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Preview Email</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h2>📧 Email Preview</h2>
+      
+      <article>
+        <h3>Email Details</h3>
+        <p><strong>Subject:</strong> {{ subject }}</p>
+        <p><strong>Recipients:</strong> {{ email_count }} email(s)</p>
+        
+        <details>
+          <summary>View Recipients ({{ email_count }})</summary>
+          <ul>
+            {% for email in emails %}
+              <li>{{ email }}</li>
+            {% endfor %}
+          </ul>
+        </details>
+        
+        <h4>Full Email Preview:</h4>
+        <div style="border: 2px solid #007bff; padding: 1.5rem; background: #f8f9fa; margin: 1rem 0;">
+          <div style="border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+            <strong>To:</strong> 
+            {% for email in emails %}
+              {{ email }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+          </div>
+          <div style="border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+            <strong>Subject:</strong> {{ subject }}
+          </div>
+          <div style="white-space: pre-wrap; font-family: Arial, sans-serif; line-height: 1.6;">{{ body }}</div>
+        </div>
+        
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+          <strong>⚠️ Scheduled Sending:</strong> Emails will be sent one by one with 2-minute intervals between each email.
+        </div>
+      </article>
+
+      <form action="{{ url_for('confirm_send') }}" method="post">
+        <input type="hidden" name="subject" value="{{ subject }}" />
+        <input type="hidden" name="body" value="{{ body }}" />
+        <input type="hidden" name="emails" value="{{ emails|join(',') }}" />
+        
+        <button type="submit" style="background: #28a745; padding: 1rem 2rem; font-size: 1.1rem;">📅 Schedule & Send Emails</button>
+        <a href="{{ url_for('send_email') }}" role="button" class="secondary" style="padding: 1rem 2rem;">✏️ Edit Email</a>
+        <a href="{{ url_for('index') }}" role="button" class="secondary" style="padding: 1rem 2rem;">🏠 Home</a>
+      </form>
+    </main>
+  </body>
+</html>

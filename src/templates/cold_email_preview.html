@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cold Email Preview</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  </head>
+  <body>
+    <script>
+      // Add character count and auto-save indicators
+      document.addEventListener('DOMContentLoaded', function() {
+        const textareas = document.querySelectorAll('textarea[name^="body_"]');
+        const inputs = document.querySelectorAll('input[name^="subject_"]');
+        
+        // Add character count for subjects
+        inputs.forEach(function(input, index) {
+          const wrapper = input.parentElement;
+          const counter = document.createElement('div');
+          counter.style.fontSize = '0.8rem';
+          counter.style.color = '#666';
+          counter.style.marginTop = '0.25rem';
+          counter.id = 'subject_counter_' + index;
+          wrapper.appendChild(counter);
+          
+          function updateCounter() {
+            const count = input.value.length;
+            counter.textContent = count + ' characters';
+            if (count > 50) {
+              counter.style.color = '#dc3545';
+            } else {
+              counter.style.color = '#666';
+            }
+          }
+          
+          input.addEventListener('input', updateCounter);
+          updateCounter();
+        });
+        
+        // Add character count for bodies
+        textareas.forEach(function(textarea, index) {
+          const wrapper = textarea.parentElement;
+          const counter = document.createElement('div');
+          counter.style.fontSize = '0.8rem';
+          counter.style.color = '#666';
+          counter.style.marginTop = '0.25rem';
+          counter.id = 'body_counter_' + index;
+          wrapper.appendChild(counter);
+          
+          function updateCounter() {
+            const count = textarea.value.length;
+            const words = textarea.value.trim().split(/\s+/).filter(word => word.length > 0).length;
+            counter.textContent = count + ' characters, ' + words + ' words';
+            if (words < 100) {
+              counter.style.color = '#ffc107';
+              counter.textContent += ' (Target: 100-150 words)';
+            } else if (words > 150) {
+              counter.style.color = '#dc3545';
+              counter.textContent += ' (Target: 100-150 words)';
+            } else {
+              counter.style.color = '#28a745';
+              counter.textContent += ' ✓';
+            }
+          }
+          
+          textarea.addEventListener('input', updateCounter);
+          updateCounter();
+        });
+        
+        // Add auto-save indicator
+        let saveTimeout;
+        function showAutoSave() {
+          const indicator = document.getElementById('auto_save_indicator');
+          if (indicator) {
+            indicator.style.display = 'inline';
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(function() {
+              indicator.style.display = 'none';
+            }, 2000);
+          }
+        }
+        
+        // Show auto-save indicator on any change
+        const allInputs = document.querySelectorAll('input[name^="subject_"], textarea[name^="body_"]');
+        allInputs.forEach(function(input) {
+          input.addEventListener('input', showAutoSave);
+        });
+      });
+    </script>
+    <main class="container">
+      <h2>🤖 AI/Robotics Cold Email Preview</h2>
+      
+      <article>
+        <h3>Generated Cold Emails</h3>
+        <p><strong>Total Companies:</strong> {{ email_count }}</p>
+        <p><strong>Product/Service:</strong> {{ product_description or "AI Agent & Robotics Solutions" }}</p>
+        
+        <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+          <strong>✅ Auto-Generated:</strong> Personalized cold emails for each company about {{ product_description or "AI agent and robotics solutions" }}.
+          <br><small><strong>✏️ Editable:</strong> You can modify the subject and body for each email before sending.</small>
+        </div>
+        
+        <div style="background: #e7f3ff; border: 1px solid #b3d9ff; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+          <strong>💡 Tips:</strong>
+          <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+            <li>Each email has a <strong>unique style</strong> based on company characteristics</li>
+            <li>No call scheduling - emails focus on <strong>value proposition</strong></li>
+            <li>Emails vary by company type: <strong>achievement-focused</strong>, <strong>mission-driven</strong>, <strong>innovation-forward</strong>, etc.</li>
+            <li>Content is tailored to each company's <strong>specific details and focus</strong></li>
+            <li>All sections are <strong>editable</strong> - modify as needed before sending</li>
+          </ul>
+        </div>
+        
+        {% for company in company_data_list %}
+        <details style="margin: 1rem 0;" open>
+          <summary><strong>{{ company.company }}</strong> - {{ company.email }}</summary>
+          <div style="border: 2px solid #007bff; padding: 1.5rem; background: #f8f9fa; margin: 1rem 0;">
+            <div style="border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+              <strong>To:</strong> {{ company.email }}
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Subject:</label>
+              <input type="text" name="subject_{{ loop.index0 }}" value="{{ company.subject }}" 
+                     style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem;" />
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Email Body (100-150 words):</label>
+              <textarea name="body_{{ loop.index0 }}" rows="12" 
+                        style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-family: Arial, sans-serif; line-height: 1.6; resize: vertical;">{{ company.body }}</textarea>
+            </div>
+            
+            {% if company.details_content %}
+            <div style="margin-top: 1rem; padding: 0.5rem; background: #e9ecef; border-radius: 4px;">
+              <strong>Company Details:</strong> {{ company.details_content[:200] }}{% if company.details_content|length > 200 %}...{% endif %}
+            </div>
+            {% endif %}
+          </div>
+        </details>
+        {% endfor %}
+        
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 4px; margin: 1rem 0;">
+          <strong>⚠️ Scheduled Sending:</strong> Each personalized email will be sent with 2-minute intervals between companies.
+        </div>
+      </article>
+
+      <form action="{{ url_for('confirm_cold_email_send') }}" method="post">
+        <input type="hidden" name="product_description" value="{{ product_description or 'AI agent and robotics solutions' }}" />
+        {% for company in company_data_list %}
+        <input type="hidden" name="company_email" value="{{ company.email }}" />
+        <input type="hidden" name="company_name" value="{{ company.company }}" />
+        <input type="hidden" name="company_details" value="{{ company.details_content or '' }}" />
+        {% endfor %}
+        
+        <div style="margin: 1rem 0; text-align: center;">
+          <span id="auto_save_indicator" style="display: none; color: #28a745; font-size: 0.9rem; margin-right: 1rem;">💾 Changes saved</span>
+        </div>
+        
+        <button type="submit" style="background: #28a745; padding: 1rem 2rem; font-size: 1.1rem;">📅 Schedule & Send Cold Emails</button>
+        <a href="{{ url_for('send_email') }}" role="button" class="secondary" style="padding: 1rem 2rem;">✏️ Edit Settings</a>
+        <a href="{{ url_for('index') }}" role="button" class="secondary" style="padding: 1rem 2rem;">🏠 Home</a>
+      </form>
+    </main>
+  </body>
+</html>

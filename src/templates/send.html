@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Send Email</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h2>Send Email</h2>
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <article>
+            {% for message in messages %}
+              <p>{{ message }}</p>
+            {% endfor %}
+          </article>
+        {% endif %}
+      {% endwith %}
+
+      <form action="{{ url_for('send_email') }}" method="post" enctype="multipart/form-data">
+        <label>
+          Subject
+          <input name="subject" type="text" placeholder="Subject" required />
+        </label>
+        <label>
+          Message
+          <textarea name="body" rows="6" placeholder="Write your message..." required></textarea>
+        </label>
+
+        <details open>
+          <summary>Upload CSV/XLSX file</summary>
+          <label>
+            File
+            <input type="file" name="file" accept=".csv,.xlsx" />
+          </label>
+          <label>
+            <input type="checkbox" name="auto_generate" />
+            🤖 Auto-generate cold emails (detects company data)
+          </label>
+          <label>
+            Product/Service Description
+            <input type="text" name="product_description" placeholder="e.g., AI Agent & Robotics Solutions, Software Development Services, Digital Marketing Tools" />
+          </label>
+          <small>We will auto-detect the email column and generate personalized cold emails about your specified product/service.</small>
+        </details>
+
+        <p>Or provide a single email address:</p>
+        <label>
+          Single email
+          <input name="single_email" type="email" placeholder="user@example.com" />
+        </label>
+
+        <button type="submit">Send</button>
+        <a href="{{ url_for('index') }}" role="button" class="secondary">Back</a>
+      </form>
+    </main>
+  </body>
+  </html>
+
+
