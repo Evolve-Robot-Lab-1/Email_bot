@@ -1,0 +1,427 @@
+{% extends "layout.html" %}
+
+{% block title %}Inbox{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900">Inbox</h2>
+            <p class="text-gray-600 mt-1">Fetch and manage your Gmail messages</p>
+        </div>
+        <button id="fetch-emails-btn" class="btn btn-primary">
+            <i class="fas fa-sync-alt mr-2"></i>Fetch Emails
+        </button>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="card">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="form-label">Search</label>
+                <input type="text" id="search-input" class="form-input" placeholder="Search emails...">
+            </div>
+            <div>
+                <label class="form-label">Max Results</label>
+                <select id="max-results" class="form-input">
+                    <option value="10">10 emails</option>
+                    <option value="20" selected>20 emails</option>
+                    <option value="50">50 emails</option>
+                    <option value="100">100 emails</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Sort By</label>
+                <select id="sort-by" class="form-input">
+                    <option value="date">Date (Newest First)</option>
+                    <option value="sender">Sender</option>
+                    <option value="subject">Subject</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email List -->
+    <div class="card">
+        <div class="card-header">
+            <span><i class="fas fa-inbox mr-2 text-blue-600"></i>Messages</span>
+            <span class="text-sm font-normal text-gray-500">
+                <span id="email-count">0</span> emails loaded
+            </span>
+        </div>
+
+        <!-- Loading state -->
+        <div id="loading-state" class="text-center py-12">
+            <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500">Click "Fetch Emails" to load your inbox</p>
+        </div>
+
+        <!-- Email table -->
+        <div id="emails-container" class="hidden">
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>From</th>
+                            <th>Subject</th>
+                            <th>Preview</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="emails-tbody">
+                        <!-- Emails will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Email Detail Modal -->
+<div id="email-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 flex justify-between items-center">
+            <h3 class="text-2xl font-bold">Email Details</h3>
+            <button id="close-email-modal" class="hover:bg-white/20 rounded-full p-2">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-280px)]">
+            <!-- Email header -->
+            <div class="mb-6 pb-4 border-b border-gray-200">
+                <h4 class="text-xl font-bold text-gray-900 mb-2" id="email-detail-subject">Subject</h4>
+                <div class="flex items-center justify-between text-sm text-gray-600">
+                    <div>
+                        <p><strong>From:</strong> <span id="email-detail-from">sender@example.com</span></p>
+                        <p class="mt-1"><strong>Date:</strong> <span id="email-detail-date">Date</span></p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="ai-reply-btn" class="btn btn-primary btn-sm">
+                            <i class="fas fa-magic mr-2"></i>AI Reply
+                        </button>
+                        <button id="manual-reply-btn" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-reply mr-2"></i>Manual Reply
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email body -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                <div id="email-detail-body" class="prose max-w-none whitespace-pre-wrap text-gray-800">
+                    Email body will appear here...
+                </div>
+            </div>
+
+            <!-- Reply section (hidden by default) -->
+            <div id="reply-section" class="hidden">
+                <h5 class="font-semibold text-gray-900 mb-3">
+                    <i class="fas fa-reply mr-2"></i>Compose Reply
+                </h5>
+
+                <div class="mb-4">
+                    <label class="form-label">Subject</label>
+                    <input type="text" id="reply-subject" class="form-input" placeholder="Re: ...">
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Message</label>
+                    <textarea id="reply-body" rows="8" class="form-input" placeholder="Type your reply..."></textarea>
+                    <div class="text-xs text-gray-500 mt-1">
+                        <span id="reply-words">0</span> words
+                    </div>
+                </div>
+
+                <!-- AI suggestions for reply -->
+                <div id="reply-ai-suggestions" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <h6 class="font-semibold text-blue-900 mb-2">
+                        <i class="fas fa-lightbulb mr-2"></i>AI Suggested Reply
+                    </h6>
+                    <div id="suggested-reply" class="text-sm text-blue-800 whitespace-pre-wrap"></div>
+                    <button id="use-suggestion-btn" class="btn btn-primary btn-sm mt-3">
+                        <i class="fas fa-check mr-2"></i>Use This Reply
+                    </button>
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-reply-btn" class="btn btn-secondary">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </button>
+                    <button id="send-reply-btn" class="btn btn-success">
+                        <i class="fas fa-paper-plane mr-2"></i>Send Reply
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allEmails = [];
+let currentEmail = null;
+
+// Fetch emails
+document.getElementById('fetch-emails-btn').addEventListener('click', fetchEmails);
+
+async function fetchEmails() {
+    const maxResults = document.getElementById('max-results').value;
+    const btn = document.getElementById('fetch-emails-btn');
+
+    btn.innerHTML = '<div class="spinner"></div><span class="ml-2">Fetching...</span>';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(`/api/emails/fetch?max=${maxResults}`);
+        const data = await response.json();
+
+        if (data.error) {
+            showToast(data.error, 'error');
+            return;
+        }
+
+        allEmails = data.emails;
+        displayEmails(allEmails);
+        showToast(`Loaded ${data.total} emails`, 'success');
+
+        document.getElementById('loading-state').classList.add('hidden');
+        document.getElementById('emails-container').classList.remove('hidden');
+        document.getElementById('email-count').textContent = data.total;
+
+    } catch (error) {
+        showToast('Error fetching emails. Please check Gmail authentication.', 'error');
+    } finally {
+        btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Fetch Emails';
+        btn.disabled = false;
+    }
+}
+
+function displayEmails(emails) {
+    const tbody = document.getElementById('emails-tbody');
+    tbody.innerHTML = '';
+
+    if (emails.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No emails found</td></tr>';
+        return;
+    }
+
+    emails.forEach((email, index) => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 cursor-pointer';
+        row.innerHTML = `
+            <td class="font-medium text-gray-900">${truncate(email.from, 30)}</td>
+            <td class="font-medium text-gray-900">${truncate(email.subject, 50)}</td>
+            <td class="text-gray-600">${truncate(email.snippet, 60)}</td>
+            <td class="text-gray-500">${formatDate(email.date)}</td>
+            <td>
+                <button class="view-email-btn btn btn-primary btn-sm" data-index="${index}">
+                    <i class="fas fa-eye mr-1"></i>View
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    // Attach view listeners
+    document.querySelectorAll('.view-email-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            viewEmail(parseInt(btn.dataset.index));
+        });
+    });
+}
+
+function viewEmail(index) {
+    currentEmail = allEmails[index];
+
+    document.getElementById('email-detail-subject').textContent = currentEmail.subject;
+    document.getElementById('email-detail-from').textContent = currentEmail.from;
+    document.getElementById('email-detail-date').textContent = currentEmail.date;
+    document.getElementById('email-detail-body').textContent = currentEmail.body || currentEmail.snippet;
+
+    // Pre-fill reply subject
+    const replySubject = currentEmail.subject.startsWith('Re:') ?
+        currentEmail.subject :
+        `Re: ${currentEmail.subject}`;
+    document.getElementById('reply-subject').value = replySubject;
+
+    document.getElementById('email-modal').classList.remove('hidden');
+    document.getElementById('email-modal').classList.add('flex');
+}
+
+// Close modal
+document.getElementById('close-email-modal').addEventListener('click', () => {
+    document.getElementById('email-modal').classList.add('hidden');
+    document.getElementById('email-modal').classList.remove('flex');
+    document.getElementById('reply-section').classList.add('hidden');
+});
+
+// AI Reply
+document.getElementById('ai-reply-btn').addEventListener('click', async () => {
+    document.getElementById('reply-section').classList.remove('hidden');
+    document.getElementById('reply-ai-suggestions').classList.remove('hidden');
+
+    const btn = document.getElementById('ai-reply-btn');
+    btn.innerHTML = '<div class="spinner"></div><span class="ml-2">Generating...</span>';
+    btn.disabled = true;
+
+    try {
+        // Use chatbot to generate reply
+        const response = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                message: `Generate a professional email reply to this email:\n\nFrom: ${currentEmail.from}\nSubject: ${currentEmail.subject}\nBody: ${currentEmail.body || currentEmail.snippet}\n\nWrite a concise, professional reply.`,
+                context: { page: 'inbox' }
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('suggested-reply').textContent = data.response;
+            showToast('AI reply generated!', 'success');
+        } else {
+            showToast(data.error || 'Error generating reply', 'error');
+        }
+
+    } catch (error) {
+        showToast('Error generating AI reply', 'error');
+    } finally {
+        btn.innerHTML = '<i class="fas fa-magic mr-2"></i>AI Reply';
+        btn.disabled = false;
+    }
+});
+
+// Manual Reply
+document.getElementById('manual-reply-btn').addEventListener('click', () => {
+    document.getElementById('reply-section').classList.remove('hidden');
+    document.getElementById('reply-body').focus();
+});
+
+// Use AI suggestion
+document.getElementById('use-suggestion-btn').addEventListener('click', () => {
+    const suggestion = document.getElementById('suggested-reply').textContent;
+    document.getElementById('reply-body').value = suggestion;
+    updateReplyWordCount();
+});
+
+// Cancel reply
+document.getElementById('cancel-reply-btn').addEventListener('click', () => {
+    document.getElementById('reply-section').classList.add('hidden');
+    document.getElementById('reply-body').value = '';
+});
+
+// Send reply
+document.getElementById('send-reply-btn').addEventListener('click', async () => {
+    const subject = document.getElementById('reply-subject').value;
+    const body = document.getElementById('reply-body').value;
+
+    if (!body.trim()) {
+        showToast('Please write a reply message', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('send-reply-btn');
+    btn.innerHTML = '<div class="spinner"></div><span class="ml-2">Sending...</span>';
+    btn.disabled = true;
+
+    try {
+        // Extract email from "Name <email>" format
+        const emailMatch = currentEmail.from.match(/<(.+)>/);
+        const toEmail = emailMatch ? emailMatch[1] : currentEmail.from;
+
+        const response = await fetch('/api/emails/send', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                to: toEmail,
+                subject: subject,
+                body: body
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Reply sent successfully!', 'success');
+            document.getElementById('reply-section').classList.add('hidden');
+            document.getElementById('reply-body').value = '';
+        } else {
+            showToast(data.error || 'Error sending reply', 'error');
+        }
+
+    } catch (error) {
+        showToast('Error sending reply', 'error');
+    } finally {
+        btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send Reply';
+        btn.disabled = false;
+    }
+});
+
+// Reply word count
+document.getElementById('reply-body').addEventListener('input', updateReplyWordCount);
+
+function updateReplyWordCount() {
+    const body = document.getElementById('reply-body').value;
+    const words = body.trim().split(/\s+/).length;
+    document.getElementById('reply-words').textContent = body.trim() ? words : 0;
+}
+
+// Search functionality
+document.getElementById('search-input').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase();
+    const filtered = allEmails.filter(email =>
+        email.from.toLowerCase().includes(query) ||
+        email.subject.toLowerCase().includes(query) ||
+        email.snippet.toLowerCase().includes(query)
+    );
+    displayEmails(filtered);
+});
+
+// Sort functionality
+document.getElementById('sort-by').addEventListener('change', (e) => {
+    const sortBy = e.target.value;
+    const sorted = [...allEmails];
+
+    if (sortBy === 'date') {
+        sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
+    } else if (sortBy === 'sender') {
+        sorted.sort((a, b) => a.from.localeCompare(b.from));
+    } else if (sortBy === 'subject') {
+        sorted.sort((a, b) => a.subject.localeCompare(b.subject));
+    }
+
+    allEmails = sorted;
+    displayEmails(sorted);
+});
+
+// Utility functions
+function truncate(str, maxLen) {
+    if (!str) return '';
+    return str.length > maxLen ? str.substring(0, maxLen) + '...' : str;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return 'Unknown';
+    const date = new Date(dateStr);
+    if (isNaN(date)) return dateStr;
+
+    const now = new Date();
+    const diffMs = now - date;
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+    if (diffHours < 24) {
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffHours < 24 * 7) {
+        return date.toLocaleDateString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+    } else {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+}
+</script>
+{% endblock %}

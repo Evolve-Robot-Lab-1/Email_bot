@@ -1,0 +1,233 @@
+/**
+ * Custom Styles for Gmail Campaign Builder V2
+ */
+
+/* Smooth transitions */
+* {
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Card styles */
+.card {
+    @apply bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow;
+}
+
+.card-header {
+    @apply text-xl font-bold text-gray-800 mb-4 flex items-center justify-between;
+}
+
+/* Button styles */
+.btn {
+    @apply px-6 py-2.5 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+}
+
+.btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500;
+}
+
+.btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+}
+
+.btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+}
+
+.btn-warning {
+    @apply bg-yellow-500 text-white hover:bg-yellow-600 focus:ring-yellow-500;
+}
+
+/* Form inputs */
+.form-input {
+    @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+.form-label {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+/* Table styles */
+.table {
+    @apply w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm;
+}
+
+.table thead {
+    @apply bg-gray-50 border-b border-gray-200;
+}
+
+.table th {
+    @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.table td {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-700;
+}
+
+.table tbody tr:hover {
+    @apply bg-gray-50;
+}
+
+/* Badge styles */
+.badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+}
+
+.badge-success {
+    @apply bg-green-100 text-green-800;
+}
+
+.badge-danger {
+    @apply bg-red-100 text-red-800;
+}
+
+.badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.badge-info {
+    @apply bg-blue-100 text-blue-800;
+}
+
+.badge-gray {
+    @apply bg-gray-100 text-gray-800;
+}
+
+/* Progress bar */
+.progress {
+    @apply w-full bg-gray-200 rounded-full h-4 overflow-hidden;
+}
+
+.progress-bar {
+    @apply h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300;
+}
+
+/* Loading spinner */
+.spinner {
+    @apply inline-block w-6 h-6 border-4 border-gray-200 border-t-blue-600 rounded-full;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Email preview styles */
+.email-preview {
+    @apply bg-gray-50 border border-gray-200 rounded-lg p-4;
+}
+
+.email-preview-subject {
+    @apply text-lg font-semibold text-gray-900 mb-2;
+}
+
+.email-preview-body {
+    @apply text-sm text-gray-700 whitespace-pre-wrap;
+}
+
+/* File upload area */
+.upload-area {
+    @apply border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors cursor-pointer;
+}
+
+.upload-area.dragover {
+    @apply border-blue-500 bg-blue-50;
+}
+
+/* Stats card */
+.stat-card {
+    @apply bg-white rounded-xl p-6 shadow-md;
+}
+
+.stat-value {
+    @apply text-3xl font-bold text-gray-900;
+}
+
+.stat-label {
+    @apply text-sm text-gray-500 mt-1;
+}
+
+/* Tooltip */
+.tooltip {
+    @apply absolute hidden bg-gray-900 text-white text-xs rounded px-2 py-1 z-50;
+}
+
+/* Animation classes */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.slide-up {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+    .card {
+        @apply p-4;
+    }
+
+    .btn {
+        @apply px-4 py-2 text-sm;
+    }
+
+    .table td, .table th {
+        @apply px-4 py-2;
+    }
+}
+
+/* Custom scrollbar for chat */
+#chatbot-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chatbot-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#chatbot-messages::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+#chatbot-messages::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Gradient backgrounds */
+.gradient-blue {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-green {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.gradient-orange {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* Dark mode support (future) */
+@media (prefers-color-scheme: dark) {
+    /* Will be implemented in next version */
+}

@@ -1,0 +1,285 @@
+{% extends "layout-v3.html" %}
+
+{% block title %}Inbox{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="page-title">Email Inbox</h1>
+            <p class="page-subtitle">Manage your sent emails and responses</p>
+        </div>
+        <button id="fetch-emails-btn" class="btn btn-primary">
+            <i class="fas fa-sync-alt"></i>
+            <span>Refresh Inbox</span>
+        </button>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card">
+    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: var(--spacing-md);">
+        <div class="form-group" style="margin: 0;">
+            <input type="text" id="search-input" class="form-input"
+                   placeholder="Search emails...">
+        </div>
+        <div class="form-group" style="margin: 0;">
+            <select id="filter-select" class="form-select">
+                <option value="all">All Emails</option>
+                <option value="sent">Sent</option>
+                <option value="received">Received</option>
+                <option value="unread">Unread</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin: 0;">
+            <select id="sort-select" class="form-select">
+                <option value="date-desc">Newest First</option>
+                <option value="date-asc">Oldest First</option>
+                <option value="from">By Sender</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Email List -->
+<div class="card">
+    <div class="table-container">
+        <table class="table" id="email-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" id="select-all">
+                    </th>
+                    <th>From</th>
+                    <th>Subject</th>
+                    <th>Preview</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="email-list">
+                <tr>
+                    <td colspan="6" class="text-center text-muted" style="padding: var(--spacing-2xl);">
+                        <i class="fas fa-inbox" style="font-size: 48px; color: var(--color-gray-300); margin-bottom: var(--spacing-md);"></i>
+                        <p>Click "Refresh Inbox" to load your emails</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Email View Modal -->
+<div id="email-modal" class="modal-overlay hidden">
+    <div class="modal" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Email Details</h3>
+            <button class="modal-close" id="close-email-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <!-- Email Header -->
+            <div style="border-bottom: 1px solid var(--color-gray-200); padding-bottom: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                <h4 id="email-subject" style="margin: 0 0 var(--spacing-sm) 0;">Subject Line</h4>
+                <div class="flex justify-between text-small text-muted">
+                    <span>From: <strong id="email-from">sender@example.com</strong></span>
+                    <span id="email-date">Date</span>
+                </div>
+            </div>
+
+            <!-- Email Body -->
+            <div id="email-body" style="padding: var(--spacing-lg); background: var(--color-gray-50); border-radius: var(--radius-md); margin-bottom: var(--spacing-lg); white-space: pre-wrap; line-height: 1.6;">
+                Email content will appear here...
+            </div>
+
+            <!-- Quick Reply -->
+            <div id="reply-section" class="hidden">
+                <h4 style="margin-bottom: var(--spacing-md);">Quick Reply</h4>
+                <div class="form-group">
+                    <textarea id="reply-text" class="form-textarea" rows="5"
+                              placeholder="Type your reply..."></textarea>
+                    <p class="form-helper">
+                        <span id="reply-words">0</span> words
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="toggle-reply">
+                <i class="fas fa-reply"></i> Reply
+            </button>
+            <button class="btn btn-primary hidden" id="send-reply">
+                <i class="fas fa-paper-plane"></i> Send Reply
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Inbox JavaScript
+let emailsData = [];
+let currentEmail = null;
+
+// Fetch emails
+document.getElementById('fetch-emails-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('fetch-emails-btn');
+    btn.innerHTML = '<span class="spinner"></span> Loading...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('/api/emails/fetch?max=50');
+        const data = await response.json();
+
+        if (data.success) {
+            emailsData = data.emails;
+            displayEmails();
+            showToast(`Loaded ${data.emails.length} emails`, 'success');
+        } else {
+            showToast(data.error || 'Failed to fetch emails', 'error');
+        }
+    } catch (error) {
+        showToast('Error fetching emails', 'error');
+    }
+
+    btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Inbox';
+    btn.disabled = false;
+});
+
+// Display emails in table
+function displayEmails() {
+    const emailList = document.getElementById('email-list');
+
+    if (emailsData.length === 0) {
+        emailList.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted" style="padding: var(--spacing-2xl);">
+                    <i class="fas fa-inbox" style="font-size: 48px; color: var(--color-gray-300); margin-bottom: var(--spacing-md);"></i>
+                    <p>No emails found</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    emailList.innerHTML = '';
+
+    emailsData.forEach((email, index) => {
+        const row = document.createElement('tr');
+        const date = email.date ? new Date(email.date).toLocaleDateString() : 'N/A';
+        const preview = email.snippet || email.body?.substring(0, 100) || 'No preview';
+
+        row.innerHTML = `
+            <td><input type="checkbox" class="email-checkbox" data-id="${email.id}"></td>
+            <td>${email.from || 'Unknown'}</td>
+            <td><strong>${email.subject || 'No Subject'}</strong></td>
+            <td class="text-small text-muted">${preview}...</td>
+            <td class="text-small">${date}</td>
+            <td>
+                <button class="btn btn-ghost btn-sm view-email" data-index="${index}">
+                    <i class="fas fa-eye"></i> View
+                </button>
+            </td>
+        `;
+        emailList.appendChild(row);
+    });
+
+    // Attach event listeners
+    document.querySelectorAll('.view-email').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const index = parseInt(btn.dataset.index);
+            viewEmail(emailsData[index]);
+        });
+    });
+}
+
+// View email in modal
+function viewEmail(email) {
+    currentEmail = email;
+
+    document.getElementById('email-subject').textContent = email.subject || 'No Subject';
+    document.getElementById('email-from').textContent = email.from || 'Unknown';
+    document.getElementById('email-date').textContent = email.date ? new Date(email.date).toLocaleString() : '';
+    document.getElementById('email-body').textContent = email.body || email.snippet || 'No content';
+
+    document.getElementById('email-modal').classList.remove('hidden');
+}
+
+// Close modal
+document.getElementById('close-email-modal').addEventListener('click', () => {
+    document.getElementById('email-modal').classList.add('hidden');
+    document.getElementById('reply-section').classList.add('hidden');
+    document.getElementById('send-reply').classList.add('hidden');
+});
+
+// Toggle reply
+document.getElementById('toggle-reply').addEventListener('click', () => {
+    const replySection = document.getElementById('reply-section');
+    const sendButton = document.getElementById('send-reply');
+
+    if (replySection.classList.contains('hidden')) {
+        replySection.classList.remove('hidden');
+        sendButton.classList.remove('hidden');
+        document.getElementById('reply-text').focus();
+    } else {
+        replySection.classList.add('hidden');
+        sendButton.classList.add('hidden');
+    }
+});
+
+// Word counter for reply
+document.getElementById('reply-text').addEventListener('input', (e) => {
+    const words = e.target.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+    document.getElementById('reply-words').textContent = words;
+});
+
+// Send reply
+document.getElementById('send-reply').addEventListener('click', async () => {
+    const replyText = document.getElementById('reply-text').value;
+
+    if (!replyText.trim()) {
+        showToast('Please write a reply', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('send-reply');
+    btn.innerHTML = '<span class="spinner"></span> Sending...';
+    btn.disabled = true;
+
+    try {
+        // Simulate sending reply
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        showToast('Reply sent successfully!', 'success');
+        document.getElementById('email-modal').classList.add('hidden');
+        document.getElementById('reply-text').value = '';
+    } catch (error) {
+        showToast('Failed to send reply', 'error');
+    }
+
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Reply';
+    btn.disabled = false;
+});
+
+// Search functionality
+document.getElementById('search-input').addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#email-list tr');
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+
+// Select all checkbox
+document.getElementById('select-all').addEventListener('change', (e) => {
+    const checkboxes = document.querySelectorAll('.email-checkbox');
+    checkboxes.forEach(cb => cb.checked = e.target.checked);
+});
+</script>
+{% endblock %}

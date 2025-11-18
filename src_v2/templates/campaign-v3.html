@@ -1,0 +1,1101 @@
+{% extends "layout-v3.html" %}
+
+{% block title %}Email Campaign{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-title">Email Campaign</h1>
+    <p class="page-subtitle">Create and launch personalized email campaigns</p>
+</div>
+
+<!-- Progress Steps -->
+<div class="progress-steps">
+    <div class="progress-step active" id="step-1-indicator">
+        <div class="progress-step-number">1</div>
+        <span>Upload Recipients</span>
+    </div>
+    <div class="progress-connector"></div>
+    <div class="progress-step" id="step-2-indicator">
+        <div class="progress-step-number">2</div>
+        <span>Compose Email</span>
+    </div>
+    <div class="progress-connector"></div>
+    <div class="progress-step" id="step-3-indicator">
+        <div class="progress-step-number">3</div>
+        <span>Review & Launch</span>
+    </div>
+</div>
+
+<!-- Step 1: Upload Recipients -->
+<div id="step-1" class="card">
+    <div class="card-header">
+        <h3 class="card-title">Upload Recipients</h3>
+        <p class="card-subtitle">Import your contact list from CSV or Excel</p>
+    </div>
+
+    <!-- Upload Area -->
+    <input type="file" id="file-input" accept=".csv,.xlsx,.xls" class="hidden">
+    <div id="upload-area" class="upload-area">
+        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+        <p class="upload-text">Drop your file here or click to browse</p>
+        <p class="upload-subtext">Supports CSV and Excel files (max 5MB)</p>
+    </div>
+
+    <!-- Upload Stats (Hidden Initially) -->
+    <div id="upload-stats" class="stats-grid mt-lg hidden">
+        <div class="stat-card">
+            <div class="stat-value" id="total-count">0</div>
+            <div class="stat-label">Recipients</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="valid-count">0</div>
+            <div class="stat-label">Valid Emails</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="time-estimate">--</div>
+            <div class="stat-label">Estimated Time</div>
+        </div>
+    </div>
+
+    <!-- Action Button -->
+    <div class="flex justify-between mt-lg">
+        <div></div>
+        <button id="continue-to-compose" class="btn btn-primary hidden">
+            Continue to Compose
+            <i class="fas fa-arrow-right" style="margin-left: 8px;"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Step 2: Compose Email -->
+<div id="step-2" class="card hidden">
+    <div class="card-header">
+        <h3 class="card-title">Compose Your Email</h3>
+        <p class="card-subtitle">Create your campaign message</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg);">
+        <!-- Left Column: Settings -->
+        <div>
+            <!-- Subject Line -->
+            <div class="form-group">
+                <label class="form-label">Subject Line</label>
+                <input type="text" id="subject-template" class="form-input"
+                       placeholder="Enter your subject line..."
+                       value="Introducing our new product">
+                <p class="form-helper">Use {{company}} to personalize with company name</p>
+            </div>
+
+            <!-- Your Company -->
+            <div class="form-group">
+                <label class="form-label">Your Company</label>
+                <input type="text" id="company-info" class="form-input"
+                       placeholder="Your company name">
+            </div>
+
+            <!-- Campaign Goal (New) -->
+            <div class="form-group">
+                <label class="form-label">Campaign Goal</label>
+                <select id="campaign-goal-select" class="form-select">
+                    <option value="vc_funding">Seeking VC Funding</option>
+                    <option value="ai_robotics_sales">Selling AI/Robotics Services</option>
+                    <option value="partnership">Partnership Opportunities</option>
+                    <option value="customer_acquisition">Customer Acquisition</option>
+                    <option value="product_launch">Product Launch</option>
+                </select>
+                <p class="form-helper">This helps AI tailor the messaging for your specific goal</p>
+            </div>
+
+            <!-- Product Description -->
+            <div class="form-group">
+                <label class="form-label">Product Description</label>
+                <textarea id="product-info" class="form-textarea" rows="3"
+                          placeholder="Brief description of your product or service..."></textarea>
+            </div>
+
+            <!-- Campaign Settings -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+                <div class="form-group">
+                    <label class="form-label">Target Audience</label>
+                    <select id="audience-select" class="form-select">
+                        <option value="VCs">VCs / Investors</option>
+                        <option value="Clients">Potential Clients</option>
+                        <option value="Partners">Partners</option>
+                        <option value="Prospects">Prospects</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Style</label>
+                    <select id="email-style-select" class="form-select">
+                        <option value="professional">Professional</option>
+                        <option value="casual">Casual</option>
+                        <option value="concise">Concise</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Sending Options -->
+            <div class="form-group">
+                <label class="form-label">Sending Interval</label>
+                <select id="interval-select" class="form-select">
+                    <option value="60">1 minute between emails</option>
+                    <option value="120" selected>2 minutes between emails</option>
+                    <option value="300">5 minutes between emails</option>
+                    <option value="600">10 minutes between emails</option>
+                </select>
+                <p class="form-helper">Slower intervals help avoid spam filters</p>
+            </div>
+        </div>
+
+        <!-- Right Column: Email Template -->
+        <div>
+            <div class="form-group">
+                <label class="form-label">Email Template</label>
+                <textarea id="message-template" class="form-textarea" rows="18"
+                          placeholder="Write your email template here...
+
+Use these placeholders for personalization:
+{{company}} - Company name
+{{name}} - Recipient name
+{{why}} - AI-generated personalization
+
+Example:
+Dear {{company}},
+
+I wanted to reach out regarding...
+
+{{why}}
+
+Best regards,
+Your Name"></textarea>
+                <p class="form-helper">
+                    <span id="word-count">0</span> words •
+                    <span id="char-count">0</span> characters
+                </p>
+            </div>
+
+            <!-- Attachments Section -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-paperclip"></i> Attachments
+                </label>
+                <div class="attachment-upload-area">
+                    <input type="file" id="attachment-input" multiple
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.mp4,.avi,.mov,.mkv"
+                           style="display: none;">
+                    <div class="upload-zone" id="upload-zone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drop files here or click to upload</p>
+                        <small style="color: var(--color-gray-500); font-size: 12px;">
+                            Supports: PDF, Images (JPG, PNG, GIF), Videos (MP4, AVI, MOV)
+                        </small>
+                    </div>
+                    <div id="attachment-list" class="attachment-list mt-md" style="display: none;">
+                        <!-- Attached files will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-between mt-lg">
+        <button id="back-to-upload" class="btn btn-secondary">
+            <i class="fas fa-arrow-left" style="margin-right: 8px;"></i>
+            Back
+        </button>
+        <button id="generate-emails-btn" class="btn btn-primary">
+            Generate Emails
+            <i class="fas fa-magic" style="margin-left: 8px;"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Step 3: Review & Launch -->
+<div id="step-3" class="card hidden">
+    <div class="card-header">
+        <h3 class="card-title">Review & Launch</h3>
+        <p class="card-subtitle">
+            <span id="emails-count">0</span> emails ready to send
+        </p>
+    </div>
+
+    <!-- Email Preview Table -->
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Recipient</th>
+                    <th>Company</th>
+                    <th>Subject</th>
+                    <th>Preview</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="email-list">
+                <!-- Emails will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Launch Section -->
+    <div class="card mt-lg" style="background: var(--color-gray-50);">
+        <div class="flex justify-between items-center">
+            <div>
+                <h4 style="margin: 0; color: var(--color-gray-900);">Ready to launch?</h4>
+                <p class="text-small text-muted mt-sm">
+                    Emails will be sent with <strong id="interval-display">2 minute</strong> intervals
+                </p>
+            </div>
+            <div class="btn-group">
+                <button id="back-to-compose" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left" style="margin-right: 8px;"></i>
+                    Back
+                </button>
+                <button id="test-email-btn" class="btn btn-secondary">
+                    <i class="fas fa-flask" style="margin-right: 8px;"></i>
+                    Send Test
+                </button>
+                <button id="start-campaign-btn" class="btn btn-success btn-lg">
+                    <i class="fas fa-rocket" style="margin-right: 8px;"></i>
+                    Launch Campaign
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Campaign Progress (Shown During Send) -->
+<div id="campaign-progress" class="card hidden">
+    <div class="card-header">
+        <h3 class="card-title">Campaign in Progress</h3>
+        <div class="btn-group">
+            <button id="pause-btn" class="btn btn-secondary btn-sm">
+                <i class="fas fa-pause"></i> Pause
+            </button>
+            <button id="resume-btn" class="btn btn-success btn-sm hidden">
+                <i class="fas fa-play"></i> Resume
+            </button>
+            <button id="cancel-btn" class="btn btn-danger btn-sm">
+                <i class="fas fa-stop"></i> Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div style="margin-bottom: var(--spacing-lg);">
+        <div class="flex justify-between text-small text-muted mb-sm">
+            <span>Progress: <span id="progress-text">0 / 0</span></span>
+            <span><span id="progress-percent">0</span>%</span>
+        </div>
+        <div style="height: 8px; background: var(--color-gray-200); border-radius: var(--radius-full); overflow: hidden;">
+            <div id="progress-bar" style="height: 100%; background: var(--color-primary); width: 0%; transition: width 0.3s ease;"></div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="sent-count" style="color: var(--color-success);">0</div>
+            <div class="stat-label">Sent</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="failed-count" style="color: var(--color-error);">0</div>
+            <div class="stat-label">Failed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="pending-count" style="color: var(--color-primary);">0</div>
+            <div class="stat-label">Pending</div>
+        </div>
+    </div>
+
+    <!-- Details Log -->
+    <div class="mt-lg">
+        <h4 style="margin-bottom: var(--spacing-md);">Send Log</h4>
+        <div id="progress-details" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--color-gray-200); border-radius: var(--radius-md); padding: var(--spacing-md); background: white;">
+            <!-- Progress items will be added here -->
+        </div>
+    </div>
+</div>
+
+<!-- Email Edit Modal -->
+<div id="edit-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Email</h3>
+            <button class="modal-close" id="close-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <!-- Recipient Info -->
+            <div style="padding: var(--spacing-md); background: var(--color-gray-50); border-radius: var(--radius-md); margin-bottom: var(--spacing-lg);">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h4 id="modal-company-name" style="margin: 0;">Company Name</h4>
+                        <p class="text-small text-muted mt-xs" id="modal-company-email">email@example.com</p>
+                    </div>
+                    <button class="btn btn-primary btn-sm" id="ai-enhance-btn">
+                        <i class="fas fa-magic"></i> AI Enhance
+                    </button>
+                </div>
+            </div>
+
+            <!-- Subject -->
+            <div class="form-group">
+                <label class="form-label">Subject Line</label>
+                <input type="text" id="modal-subject" class="form-input">
+                <p class="form-helper"><span id="subject-length">0</span> characters</p>
+            </div>
+
+            <!-- Body -->
+            <div class="form-group">
+                <label class="form-label">Email Body</label>
+                <textarea id="modal-body" class="form-textarea" rows="10"></textarea>
+                <p class="form-helper">
+                    <span id="body-words">0</span> words •
+                    <span id="body-chars">0</span> characters
+                </p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancel-edit">Cancel</button>
+            <button class="btn btn-primary" id="save-email-btn">Save Changes</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Campaign Builder v3 - Clean JavaScript with AI Integration
+// Made global for chatbot access
+window.recipientsData = [];
+window.emailsData = [];
+let currentEditIndex = -1;
+let campaignInterval = null;
+let currentStep = 1;
+
+// Notify AI chatbot when campaign goal changes
+document.getElementById('campaign-goal-select').addEventListener('change', (e) => {
+    const goal = e.target.value;
+    window.dispatchEvent(new CustomEvent('campaignGoalSet', { detail: goal }));
+});
+
+// Step Management - Made global for chatbot access
+window.showStep = function(stepNumber) {
+    // Hide all steps
+    document.querySelectorAll('[id^="step-"]').forEach(step => {
+        if (step.id !== `step-${stepNumber}-indicator`) {
+            step.classList.add('hidden');
+        }
+    });
+
+    // Show current step
+    const currentStepElement = document.getElementById(`step-${stepNumber}`);
+    if (currentStepElement) {
+        currentStepElement.classList.remove('hidden');
+        currentStepElement.classList.add('fade-in');
+    }
+
+    // Update progress indicators
+    for (let i = 1; i <= 3; i++) {
+        const indicator = document.getElementById(`step-${i}-indicator`);
+        if (indicator) {
+            indicator.classList.remove('active', 'completed');
+            if (i < stepNumber) {
+                indicator.classList.add('completed');
+            } else if (i === stepNumber) {
+                indicator.classList.add('active');
+            }
+        }
+    }
+
+    // Update connectors
+    document.querySelectorAll('.progress-connector').forEach((connector, index) => {
+        if (index < stepNumber - 1) {
+            connector.classList.add('completed');
+        } else {
+            connector.classList.remove('completed');
+        }
+    });
+
+    currentStep = stepNumber;
+}
+
+// File Upload
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('file-input');
+
+uploadArea.addEventListener('click', () => fileInput.click());
+
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) handleFileUpload(files[0]);
+});
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) handleFileUpload(e.target.files[0]);
+});
+
+async function handleFileUpload(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        uploadArea.innerHTML = `
+            <div class="spinner"></div>
+            <p class="upload-text mt-md">Processing file...</p>
+        `;
+
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            showToast(data.error, 'error');
+            resetUploadArea();
+            return;
+        }
+
+        window.recipientsData = data.recipients;
+        displayUploadStats(data.total);
+        showToast(`Successfully loaded ${data.total} recipients!`, 'success');
+
+        // Notify AI chatbot about loaded data
+        window.dispatchEvent(new CustomEvent('recipientDataLoaded', { detail: window.recipientsData }));
+
+    } catch (error) {
+        showToast('Error uploading file', 'error');
+        resetUploadArea();
+    }
+}
+
+function resetUploadArea() {
+    uploadArea.innerHTML = `
+        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+        <p class="upload-text">Drop your file here or click to browse</p>
+        <p class="upload-subtext">Supports CSV and Excel files (max 5MB)</p>
+    `;
+}
+
+function displayUploadStats(total) {
+    document.getElementById('upload-stats').classList.remove('hidden');
+    document.getElementById('continue-to-compose').classList.remove('hidden');
+    document.getElementById('total-count').textContent = total;
+    document.getElementById('valid-count').textContent = total;
+
+    const interval = parseInt(document.getElementById('interval-select').value);
+    const minutes = total * (interval / 60);
+    const hours = Math.floor(minutes / 60);
+    const mins = Math.round(minutes % 60);
+    document.getElementById('time-estimate').textContent =
+        hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+
+    uploadArea.innerHTML = `
+        <i class="fas fa-check-circle upload-icon" style="color: var(--color-success);"></i>
+        <p class="upload-text">${total} recipients loaded successfully</p>
+        <p class="upload-subtext">Click to upload a different file</p>
+    `;
+}
+
+// Step Navigation
+document.getElementById('continue-to-compose').addEventListener('click', () => {
+    showStep(2);
+});
+
+document.getElementById('back-to-upload').addEventListener('click', () => {
+    showStep(1);
+});
+
+document.getElementById('back-to-compose').addEventListener('click', () => {
+    showStep(2);
+});
+
+// Character Counting
+const messageTemplate = document.getElementById('message-template');
+const wordCount = document.getElementById('word-count');
+const charCount = document.getElementById('char-count');
+
+messageTemplate.addEventListener('input', () => {
+    const text = messageTemplate.value;
+    wordCount.textContent = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+    charCount.textContent = text.length;
+});
+
+// Generate Emails with AI Context
+document.getElementById('generate-emails-btn').addEventListener('click', async () => {
+    if (!window.recipientsData || window.recipientsData.length === 0) {
+        showToast('Please upload recipients first', 'warning');
+        showStep(1);
+        return;
+    }
+
+    const audience = document.getElementById('audience-select').value;
+    const emailStyle = document.getElementById('email-style-select').value;
+    const product = document.getElementById('product-info').value;
+    const subjectTemplate = document.getElementById('subject-template').value;
+    const messageTemplate = document.getElementById('message-template').value;
+    const ourCompany = document.getElementById('company-info').value;
+    const campaignGoal = document.getElementById('campaign-goal-select').value;
+
+    if (!subjectTemplate || !messageTemplate) {
+        showToast('Please fill in all required fields', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('generate-emails-btn');
+    btn.innerHTML = '<span class="spinner"></span> Generating...';
+    btn.disabled = true;
+
+    window.emailsData = [];
+
+    for (let i = 0; i < window.recipientsData.length; i++) {
+        const recipient = window.recipientsData[i];
+
+        // Get company name from either Company_Name or company field
+        const companyName = recipient.Company_Name || recipient.company || 'Unknown Company';
+
+        try {
+            // Use the CSV-based personalization endpoint for better results
+            const response = await fetch('/api/ai/generate-personalized-email', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    csv_row: recipient,  // Pass entire CSV row with all company details
+                    campaign_info: {
+                        company: ourCompany,
+                        product: product,
+                        goal: campaignGoal,
+                        description: product,
+                        value_props: product,
+                        metrics: '',
+                        audience: audience,
+                        email_style: emailStyle
+                    },
+                    email_template: messageTemplate  // Pass template with {{why}} placeholder
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Replace placeholders in subject and body
+                let finalSubject = data.subject || subjectTemplate;
+                let finalBody = data.body || messageTemplate;
+
+                // Replace {{company}} placeholder with actual company name
+                finalSubject = finalSubject.replace(/\{\{company\}\}/gi, companyName);
+                finalBody = finalBody.replace(/\{\{company\}\}/gi, companyName);
+
+                // Replace {{name}} if available
+                const recipientName = recipient.Name || recipient.name || '';
+                if (recipientName) {
+                    finalSubject = finalSubject.replace(/\{\{name\}\}/gi, recipientName);
+                    finalBody = finalBody.replace(/\{\{name\}\}/gi, recipientName);
+                }
+
+                window.emailsData.push({
+                    to: recipient.email || recipient.Email,
+                    company: companyName,
+                    subject: finalSubject,
+                    body: finalBody,
+                    status: 'pending'
+                });
+            } else {
+                throw new Error(data.error || 'Failed to generate email');
+            }
+
+            btn.innerHTML = `<span class="spinner"></span> Generated ${i + 1}/${window.recipientsData.length}...`;
+
+        } catch (error) {
+            console.error('Error generating email:', error);
+            // Fallback: use template with basic substitution
+            window.emailsData.push({
+                to: recipient.email || recipient.Email,
+                company: companyName,
+                subject: subjectTemplate.replace(/\{\{company\}\}/gi, companyName),
+                body: messageTemplate.replace(/\{\{company\}\}/gi, companyName),
+                status: 'pending'
+            });
+        }
+    }
+
+    btn.innerHTML = 'Generate Emails <i class="fas fa-magic" style="margin-left: 8px;"></i>';
+    btn.disabled = false;
+
+    displayEmailPreviews();
+    showToast(`Generated ${window.emailsData.length} personalized emails!`, 'success');
+    showStep(3);
+});
+
+function displayEmailPreviews() {
+    const emailList = document.getElementById('email-list');
+    emailList.innerHTML = '';
+
+    window.emailsData.forEach((email, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${email.to}</td>
+            <td>${email.company}</td>
+            <td>${email.subject.substring(0, 50)}${email.subject.length > 50 ? '...' : ''}</td>
+            <td class="text-small text-muted">${email.body.substring(0, 80)}...</td>
+            <td>
+                <button class="btn btn-ghost btn-sm edit-email-btn" data-index="${index}">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+            </td>
+        `;
+        emailList.appendChild(row);
+    });
+
+    document.getElementById('emails-count').textContent = window.emailsData.length;
+
+    // Attach edit listeners
+    document.querySelectorAll('.edit-email-btn').forEach(btn => {
+        btn.addEventListener('click', () => openEditModal(parseInt(btn.dataset.index)));
+    });
+}
+
+// Edit Modal
+function openEditModal(index) {
+    currentEditIndex = index;
+    const email = window.emailsData[index];
+
+    document.getElementById('modal-company-name').textContent = email.company;
+    document.getElementById('modal-company-email').textContent = email.to;
+    document.getElementById('modal-subject').value = email.subject;
+    document.getElementById('modal-body').value = email.body;
+
+    updateModalCharCounts();
+    document.getElementById('edit-modal').classList.remove('hidden');
+}
+
+document.getElementById('close-modal').addEventListener('click', () => {
+    document.getElementById('edit-modal').classList.add('hidden');
+});
+
+document.getElementById('cancel-edit').addEventListener('click', () => {
+    document.getElementById('edit-modal').classList.add('hidden');
+});
+
+document.getElementById('save-email-btn').addEventListener('click', () => {
+    window.emailsData[currentEditIndex].subject = document.getElementById('modal-subject').value;
+    window.emailsData[currentEditIndex].body = document.getElementById('modal-body').value;
+    document.getElementById('edit-modal').classList.add('hidden');
+    displayEmailPreviews();
+    showToast('Email updated!', 'success');
+});
+
+// Character counters in modal
+['modal-subject', 'modal-body'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateModalCharCounts);
+});
+
+function updateModalCharCounts() {
+    const subject = document.getElementById('modal-subject').value;
+    const body = document.getElementById('modal-body').value;
+
+    document.getElementById('subject-length').textContent = subject.length;
+    document.getElementById('body-chars').textContent = body.length;
+    document.getElementById('body-words').textContent = body.trim().split(/\s+/).filter(w => w.length > 0).length;
+}
+
+// Test Email
+document.getElementById('test-email-btn').addEventListener('click', async () => {
+    if (window.emailsData.length === 0) {
+        showToast('Please generate emails first', 'warning');
+        return;
+    }
+
+    const testEmail = prompt('Enter your email address for test:');
+    if (!testEmail || !testEmail.includes('@')) {
+        showToast('Invalid email address', 'error');
+        return;
+    }
+
+    try {
+        const btn = document.getElementById('test-email-btn');
+        btn.innerHTML = '<span class="spinner"></span> Sending...';
+        btn.disabled = true;
+
+        const response = await fetch('/api/emails/send', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                to: testEmail,
+                subject: window.emailsData[0].subject,
+                body: window.emailsData[0].body
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast(`Test email sent to ${testEmail}!`, 'success');
+        } else {
+            showToast(data.error || 'Failed to send test email', 'error');
+        }
+
+        btn.innerHTML = '<i class="fas fa-flask" style="margin-right: 8px;"></i> Send Test';
+        btn.disabled = false;
+
+    } catch (error) {
+        showToast('Error sending test email', 'error');
+        document.getElementById('test-email-btn').innerHTML = '<i class="fas fa-flask" style="margin-right: 8px;"></i> Send Test';
+        document.getElementById('test-email-btn').disabled = false;
+    }
+});
+
+// Start Campaign
+document.getElementById('start-campaign-btn').addEventListener('click', async () => {
+    // Validate emails exist
+    if (!window.emailsData || window.emailsData.length === 0) {
+        showToast('No emails generated. Please generate emails first.', 'error');
+        return;
+    }
+
+    // Check Gmail authentication first
+    try {
+        const authCheck = await fetch('/api/auth/status');
+        const authData = await authCheck.json();
+
+        if (!authData.authenticated) {
+            showToast('Gmail not authenticated. Please connect your Gmail account first.', 'error');
+            // Optional: show auth button
+            if (confirm('Would you like to authenticate with Gmail now?')) {
+                window.location.href = '/authenticate';
+            }
+            return;
+        }
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        // Continue anyway as backend will also check
+    }
+
+    if (!confirm(`Launch campaign to ${window.emailsData.length} recipients?`)) return;
+
+    try {
+        const interval = parseInt(document.getElementById('interval-select').value);
+
+        // Upload attachments first if any
+        const attachmentFilenames = [];
+        if (attachments.length > 0) {
+            showToast('Uploading attachments...', 'info');
+
+            const formData = new FormData();
+            for (let attachment of attachments) {
+                formData.append('files', attachment);
+            }
+
+            try {
+                const uploadResponse = await fetch('/api/upload-attachments', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const uploadData = await uploadResponse.json();
+                if (uploadData.success) {
+                    attachmentFilenames.push(...uploadData.filenames);
+                } else {
+                    showToast('Failed to upload attachments', 'error');
+                    return;
+                }
+            } catch (error) {
+                showToast('Error uploading attachments', 'error');
+                console.error(error);
+                return;
+            }
+        }
+
+        const response = await fetch('/api/campaign/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                emails: window.emailsData,
+                interval: interval,
+                attachments: attachmentFilenames
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('step-3').classList.add('hidden');
+            document.getElementById('campaign-progress').classList.remove('hidden');
+            startProgressTracking();
+            showToast('Campaign launched!', 'success');
+        }
+
+    } catch (error) {
+        showToast('Error starting campaign', 'error');
+    }
+});
+
+// Progress tracking
+function startProgressTracking() {
+    campaignInterval = setInterval(updateCampaignProgress, 2000);
+}
+
+async function updateCampaignProgress() {
+    try {
+        const response = await fetch('/api/campaign/status');
+        const data = await response.json();
+
+        if (data.status === 'completed' || data.status === 'cancelled') {
+            clearInterval(campaignInterval);
+            showToast('Campaign completed!', 'success');
+        }
+
+        updateProgressUI(data);
+
+    } catch (error) {
+        console.error('Error fetching progress:', error);
+    }
+}
+
+// ============================================================================
+// Attachment Handling
+// ============================================================================
+
+const attachments = [];
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB per file
+const MAX_TOTAL_SIZE = 50 * 1024 * 1024; // 50MB total
+
+// Initialize attachment handlers
+document.addEventListener('DOMContentLoaded', () => {
+    const uploadZone = document.getElementById('upload-zone');
+    const attachmentInput = document.getElementById('attachment-input');
+    const attachmentList = document.getElementById('attachment-list');
+
+    if (!uploadZone || !attachmentInput) return;
+
+    // Click to upload
+    uploadZone.addEventListener('click', () => {
+        attachmentInput.click();
+    });
+
+    // Drag and drop
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+
+    // File input change
+    attachmentInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+});
+
+function handleFiles(files) {
+    const attachmentList = document.getElementById('attachment-list');
+    const uploadZone = document.getElementById('upload-zone');
+
+    for (let file of files) {
+        // Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+            showToast(`File "${file.name}" exceeds 25MB limit`, 'error');
+            continue;
+        }
+
+        // Check total size
+        const currentTotal = attachments.reduce((sum, att) => sum + att.size, 0);
+        if (currentTotal + file.size > MAX_TOTAL_SIZE) {
+            showToast('Total attachments exceed 50MB limit', 'error');
+            break;
+        }
+
+        // Check if file already exists
+        if (attachments.find(att => att.name === file.name)) {
+            showToast(`File "${file.name}" already added`, 'warning');
+            continue;
+        }
+
+        // Add to attachments
+        attachments.push(file);
+
+        // Create attachment item UI
+        const attachmentItem = createAttachmentItem(file);
+        attachmentList.appendChild(attachmentItem);
+    }
+
+    // Show attachment list
+    if (attachments.length > 0) {
+        attachmentList.style.display = 'flex';
+    }
+
+    // Update upload zone text to indicate more files can be added
+    if (attachments.length > 0) {
+        const uploadText = uploadZone.querySelector('p');
+        if (uploadText) {
+            uploadText.textContent = `${attachments.length} file(s) added - Drop more files or click to add`;
+        }
+    }
+
+    // Reset file input
+    document.getElementById('attachment-input').value = '';
+}
+
+function createAttachmentItem(file) {
+    const div = document.createElement('div');
+    div.className = 'attachment-item';
+    div.dataset.filename = file.name;
+
+    // Get icon based on file type
+    const icon = getFileIcon(file);
+
+    div.innerHTML = `
+        <div class="attachment-icon">
+            <i class="${icon}"></i>
+        </div>
+        <div class="attachment-info">
+            <div class="attachment-name">${file.name}</div>
+            <div class="attachment-size">${formatFileSize(file.size)}</div>
+        </div>
+        <button class="attachment-remove" onclick="removeAttachment('${file.name}')">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+
+    return div;
+}
+
+function getFileIcon(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    const type = file.type.toLowerCase();
+
+    if (type.startsWith('image/')) return 'fas fa-image';
+    if (type.startsWith('video/')) return 'fas fa-video';
+    if (ext === 'pdf') return 'fas fa-file-pdf';
+    if (['doc', 'docx'].includes(ext)) return 'fas fa-file-word';
+    if (['xls', 'xlsx'].includes(ext)) return 'fas fa-file-excel';
+    if (['ppt', 'pptx'].includes(ext)) return 'fas fa-file-powerpoint';
+    if (['zip', 'rar'].includes(ext)) return 'fas fa-file-archive';
+    return 'fas fa-file';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+function removeAttachment(filename) {
+    const index = attachments.findIndex(att => att.name === filename);
+    if (index > -1) {
+        attachments.splice(index, 1);
+
+        // Remove from UI
+        const item = document.querySelector(`.attachment-item[data-filename="${filename}"]`);
+        if (item) item.remove();
+
+        // Update upload zone text and attachment list
+        const uploadZone = document.getElementById('upload-zone');
+        const attachmentList = document.getElementById('attachment-list');
+
+        if (attachments.length === 0) {
+            attachmentList.style.display = 'none';
+            const uploadText = uploadZone.querySelector('p');
+            if (uploadText) {
+                uploadText.textContent = 'Drop files here or click to upload';
+            }
+        } else {
+            const uploadText = uploadZone.querySelector('p');
+            if (uploadText) {
+                uploadText.textContent = `${attachments.length} file(s) added - Drop more files or click to add`;
+            }
+        }
+    }
+}
+
+// Function to get attachments for email sending
+function getAttachmentsForCampaign() {
+    return attachments;
+}
+
+function updateProgressUI(data) {
+    const percent = Math.round((data.sent + data.failed) / data.total * 100);
+
+    document.getElementById('progress-text').textContent = `${data.sent + data.failed} / ${data.total}`;
+    document.getElementById('progress-percent').textContent = percent;
+    document.getElementById('progress-bar').style.width = `${percent}%`;
+    document.getElementById('sent-count').textContent = data.sent;
+    document.getElementById('failed-count').textContent = data.failed;
+    document.getElementById('pending-count').textContent = data.total - data.sent - data.failed;
+
+    // Update details
+    const detailsDiv = document.getElementById('progress-details');
+    if (data.progress && data.progress.length > 0) {
+        const latest = data.progress[data.progress.length - 1];
+        const item = document.createElement('div');
+        item.className = 'flex justify-between items-center mb-sm';
+        item.style.padding = 'var(--spacing-sm)';
+        item.style.background = latest.status === 'sent' ? 'var(--color-success-light)' : 'var(--color-error-light)';
+        item.style.borderRadius = 'var(--radius-sm)';
+        item.innerHTML = `
+            <span class="text-small">${latest.company}</span>
+            <span class="badge badge-${latest.status === 'sent' ? 'success' : 'error'}">${latest.status}</span>
+        `;
+        detailsDiv.insertBefore(item, detailsDiv.firstChild);
+    }
+}
+
+// Campaign controls
+document.getElementById('pause-btn').addEventListener('click', async () => {
+    await fetch('/api/campaign/pause', { method: 'POST' });
+    document.getElementById('pause-btn').classList.add('hidden');
+    document.getElementById('resume-btn').classList.remove('hidden');
+    showToast('Campaign paused', 'warning');
+});
+
+document.getElementById('resume-btn').addEventListener('click', async () => {
+    await fetch('/api/campaign/resume', { method: 'POST' });
+    document.getElementById('resume-btn').classList.add('hidden');
+    document.getElementById('pause-btn').classList.remove('hidden');
+    showToast('Campaign resumed', 'success');
+});
+
+document.getElementById('cancel-btn').addEventListener('click', async () => {
+    if (confirm('Cancel campaign?')) {
+        await fetch('/api/campaign/cancel', { method: 'POST' });
+        clearInterval(campaignInterval);
+        showToast('Campaign cancelled', 'error');
+    }
+});
+
+// Update interval display
+document.getElementById('interval-select').addEventListener('change', (e) => {
+    const interval = parseInt(e.target.value);
+    const minutes = interval / 60;
+    const displayText = minutes < 1 ? `${interval} second` : `${minutes} minute${minutes > 1 ? 's' : ''}`;
+    document.getElementById('interval-display').textContent = displayText;
+});
+</script>
+{% endblock %}

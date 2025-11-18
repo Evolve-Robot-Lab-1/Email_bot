@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Campaign Builder{% endblock %}</title>
+
+    <!-- Modern Clean CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles-v3.css') }}">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Clean Navigation Bar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <!-- Brand -->
+            <a href="{{ url_for('campaign') }}" class="navbar-brand">
+                <i class="fas fa-rocket" style="color: var(--color-primary);"></i>
+                <span>Campaign Builder</span>
+            </a>
+
+            <!-- Navigation Links -->
+            <div class="navbar-nav">
+                <a href="{{ url_for('campaign') }}"
+                   class="nav-link {% if request.endpoint == 'campaign' %}active{% endif %}">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Campaign</span>
+                </a>
+                <a href="{{ url_for('inbox') }}"
+                   class="nav-link {% if request.endpoint == 'inbox' %}active{% endif %}">
+                    <i class="fas fa-inbox"></i>
+                    <span>Inbox</span>
+                </a>
+                <a href="{{ url_for('analytics') }}"
+                   class="nav-link {% if request.endpoint == 'analytics' %}active{% endif %}">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+            </div>
+
+            <!-- User Menu -->
+            <div class="navbar-nav">
+                <button class="nav-link">
+                    <i class="fas fa-user-circle"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container" style="padding-top: var(--spacing-xl); padding-bottom: var(--spacing-xl);">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" style="position: fixed; top: 80px; right: 24px; z-index: 1000;"></div>
+
+    <!-- AI Chatbot -->
+    <div id="ai-chatbot" style="position: fixed; bottom: 24px; right: 24px; z-index: 999;">
+        <!-- Chatbot Toggle Button -->
+        <button id="chatbot-toggle" class="chatbot-toggle">
+            <i class="fas fa-robot"></i>
+            <span class="chatbot-badge hidden">1</span>
+        </button>
+
+        <!-- Chat Window -->
+        <div id="chatbot-window" class="chatbot-window hidden">
+            <!-- Header -->
+            <div class="chatbot-header">
+                <div class="flex items-center gap-sm">
+                    <i class="fas fa-robot" style="color: white;"></i>
+                    <div>
+                        <div class="chatbot-title">AI Assistant</div>
+                        <div class="chatbot-subtitle">Powered by Groq</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-sm">
+                    <button id="chatbot-minimize" class="chatbot-minimize" title="Minimize">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button id="chatbot-close" class="chatbot-close" title="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div id="chatbot-messages" class="chatbot-messages">
+                <!-- Welcome Message -->
+                <div class="chat-message assistant">
+                    <div class="chat-bubble">
+                        <p style="margin: 0;">Hi! I can help with your email campaign.</p>
+                        <p style="margin: 6px 0 0 0; font-size: 12px;">Type <strong>/help</strong> for commands or ask me anything!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input -->
+            <div class="chatbot-input-container">
+                <!-- Hidden file input for document upload -->
+                <input type="file"
+                       id="chatbot-document-input"
+                       accept=".pdf,.docx,.doc"
+                       style="display: none;">
+
+                <button id="chatbot-upload-btn"
+                        class="chatbot-upload-btn"
+                        title="Upload campaign document (PDF/DOCX)">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+
+                <textarea id="chatbot-input"
+                         class="chatbot-input"
+                         placeholder="Ask me anything or type /help..."
+                         rows="1"></textarea>
+                <button id="chatbot-send" class="chatbot-send">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+
+            <!-- Status -->
+            <div class="chatbot-status">
+                <span id="chatbot-status">Ready</span>
+                <button id="chatbot-clear" class="chatbot-clear">
+                    <i class="fas fa-trash-alt"></i> Clear
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Common Scripts -->
+    <script src="{{ url_for('static', filename='js/chatbot-v3.js') }}"></script>
+    <script>
+        // Toast notification system
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            const icons = {
+                success: 'check-circle',
+                error: 'exclamation-circle',
+                warning: 'exclamation-triangle',
+                info: 'info-circle'
+            };
+
+            toast.className = `alert alert-${type} slide-up`;
+            toast.style.minWidth = '300px';
+            toast.style.marginBottom = 'var(--spacing-sm)';
+            toast.innerHTML = `
+                <i class="fas fa-${icons[type]}"></i>
+                <span>${message}</span>
+            `;
+
+            document.getElementById('toast-container').appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Make showToast globally available
+        window.showToast = showToast;
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

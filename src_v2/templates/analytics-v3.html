@@ -1,0 +1,354 @@
+{% extends "layout-v3.html" %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="page-title">Analytics Dashboard</h1>
+            <p class="page-subtitle">Track your campaign performance</p>
+        </div>
+        <button class="btn btn-secondary">
+            <i class="fas fa-download"></i>
+            <span>Export Data</span>
+        </button>
+    </div>
+</div>
+
+<!-- Stats Overview -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--color-primary);">
+            {{ campaign_history | sum(attribute='sent', default=0) }}
+        </div>
+        <div class="stat-label">Total Emails Sent</div>
+        <div class="stat-change positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>12% from last week</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">
+            {{ campaign_history | length }}
+        </div>
+        <div class="stat-label">Total Campaigns</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" style="color: var(--color-success);">
+            {% if campaign_history | length > 0 %}
+                {{ ((campaign_history | sum(attribute='sent', default=0)) / (campaign_history | sum(attribute='total', default=1)) * 100) | round(1) }}%
+            {% else %}
+                0%
+            {% endif %}
+        </div>
+        <div class="stat-label">Success Rate</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">
+            {% if campaign_history | length > 0 %}
+                {{ (campaign_history | sum(attribute='sent', default=0) / campaign_history | length) | round(0) }}
+            {% else %}
+                0
+            {% endif %}
+        </div>
+        <div class="stat-label">Avg per Campaign</div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg);">
+    <!-- Email Status Chart -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Email Status Distribution</h3>
+        </div>
+        <canvas id="statusChart" style="max-height: 300px;"></canvas>
+    </div>
+
+    <!-- Timeline Chart -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Campaign Timeline</h3>
+        </div>
+        <canvas id="timelineChart" style="max-height: 300px;"></canvas>
+    </div>
+</div>
+
+<!-- Campaign History Table -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Campaign History</h3>
+        <p class="card-subtitle">Recent campaigns and their performance</p>
+    </div>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Campaign Name</th>
+                    <th>Total Recipients</th>
+                    <th>Sent</th>
+                    <th>Failed</th>
+                    <th>Success Rate</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if campaign_history %}
+                    {% for campaign in campaign_history[-10:] | reverse %}
+                    <tr>
+                        <td>{{ campaign.date[:10] if campaign.date else 'N/A' }}</td>
+                        <td>Campaign #{{ loop.revindex }}</td>
+                        <td>{{ campaign.total | default(0) }}</td>
+                        <td>
+                            <span class="badge badge-success">{{ campaign.sent | default(0) }}</span>
+                        </td>
+                        <td>
+                            <span class="badge badge-error">{{ campaign.failed | default(0) }}</span>
+                        </td>
+                        <td>
+                            {% if campaign.total and campaign.total > 0 %}
+                                {{ ((campaign.sent / campaign.total) * 100) | round(1) }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-ghost btn-sm view-details" data-index="{{ loop.index0 }}">
+                                <i class="fas fa-chart-bar"></i> Details
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted" style="padding: var(--spacing-2xl);">
+                            <i class="fas fa-chart-line" style="font-size: 48px; color: var(--color-gray-300); margin-bottom: var(--spacing-md);"></i>
+                            <p>No campaigns yet. Launch your first campaign to see analytics!</p>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Campaign Details Modal -->
+<div id="details-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Campaign Details</h3>
+            <button class="modal-close" id="close-details">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <!-- Stats Summary -->
+            <div class="stats-grid" style="margin-bottom: var(--spacing-lg);">
+                <div class="stat-card">
+                    <div class="stat-value" id="detail-total">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="detail-sent" style="color: var(--color-success);">0</div>
+                    <div class="stat-label">Sent</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="detail-failed" style="color: var(--color-error);">0</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+            </div>
+
+            <!-- Email List -->
+            <h4 style="margin-bottom: var(--spacing-md);">Email Breakdown</h4>
+            <div id="detail-emails" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--color-gray-200); border-radius: var(--radius-md); padding: var(--spacing-md);">
+                <!-- Email details will be populated here -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="close-details-btn">Close</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Analytics JavaScript
+const campaignHistory = {{ campaign_history | tojson | safe }};
+
+// Initialize charts if there's data
+if (campaignHistory.length > 0) {
+    // Calculate totals for status chart
+    const totalSent = campaignHistory.reduce((sum, c) => sum + (c.sent || 0), 0);
+    const totalFailed = campaignHistory.reduce((sum, c) => sum + (c.failed || 0), 0);
+
+    // Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Sent', 'Failed'],
+            datasets: [{
+                data: [totalSent, totalFailed],
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.8)',  // Success color
+                    'rgba(239, 68, 68, 0.8)'     // Error color
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 14
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Timeline Chart
+    const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+    const last7Campaigns = campaignHistory.slice(-7);
+
+    new Chart(timelineCtx, {
+        type: 'bar',
+        data: {
+            labels: last7Campaigns.map((c, i) => `Campaign ${i + 1}`),
+            datasets: [
+                {
+                    label: 'Sent',
+                    data: last7Campaigns.map(c => c.sent || 0),
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',  // Primary color
+                },
+                {
+                    label: 'Failed',
+                    data: last7Campaigns.map(c => c.failed || 0),
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',   // Error color
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                x: {
+                    stacked: true,
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 14
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// View campaign details
+document.querySelectorAll('.view-details').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const index = parseInt(btn.dataset.index);
+        const campaign = campaignHistory[campaignHistory.length - 1 - index];
+        showCampaignDetails(campaign);
+    });
+});
+
+function showCampaignDetails(campaign) {
+    document.getElementById('detail-total').textContent = campaign.total || 0;
+    document.getElementById('detail-sent').textContent = campaign.sent || 0;
+    document.getElementById('detail-failed').textContent = campaign.failed || 0;
+
+    const emailsList = document.getElementById('detail-emails');
+    emailsList.innerHTML = '';
+
+    if (campaign.progress && campaign.progress.length > 0) {
+        campaign.progress.forEach(email => {
+            const item = document.createElement('div');
+            item.className = 'flex justify-between items-center mb-sm';
+            item.style.padding = 'var(--spacing-sm)';
+            item.style.background = email.status === 'sent' ? 'var(--color-success-light)' : 'var(--color-error-light)';
+            item.style.borderRadius = 'var(--radius-sm)';
+            item.innerHTML = `
+                <span>${email.company || email.email}</span>
+                <span class="badge badge-${email.status === 'sent' ? 'success' : 'error'}">${email.status}</span>
+            `;
+            emailsList.appendChild(item);
+        });
+    } else {
+        emailsList.innerHTML = '<p class="text-center text-muted">No detailed information available</p>';
+    }
+
+    document.getElementById('details-modal').classList.remove('hidden');
+}
+
+// Close modal
+document.getElementById('close-details').addEventListener('click', () => {
+    document.getElementById('details-modal').classList.add('hidden');
+});
+
+document.getElementById('close-details-btn').addEventListener('click', () => {
+    document.getElementById('details-modal').classList.add('hidden');
+});
+
+// Export data
+document.querySelector('.btn-secondary').addEventListener('click', () => {
+    const csvData = convertToCSV(campaignHistory);
+    downloadCSV(csvData, 'campaign-analytics.csv');
+    showToast('Data exported successfully!', 'success');
+});
+
+function convertToCSV(data) {
+    if (!data || data.length === 0) return 'No data available';
+
+    const headers = ['Date', 'Total', 'Sent', 'Failed', 'Success Rate'];
+    const rows = data.map(c => [
+        c.date ? c.date.substring(0, 10) : 'N/A',
+        c.total || 0,
+        c.sent || 0,
+        c.failed || 0,
+        c.total ? ((c.sent / c.total) * 100).toFixed(1) + '%' : '0%'
+    ]);
+
+    return [headers, ...rows].map(row => row.join(',')).join('\n');
+}
+
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}
